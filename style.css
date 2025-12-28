@@ -13,7 +13,7 @@
   --font-weight-regular: 400;
   --font-weight-medium: 500;
   
-  --grid-gap: 40px;
+  --grid-gap: 60px;
   --grid-cell-size: 280px;
   --grid-columns: 8;
   --grid-rows: 5;
@@ -201,14 +201,11 @@ body {
 .lightbox__backdrop {
   position: absolute;
   inset: 0;
-  background: var(--color-bg);
-  opacity: 0;
-  transition: opacity 0.6s cubic-bezier(0.4, 0, 0.2, 1);
+  background: transparent;
   pointer-events: none;
 }
 
 .lightbox.active .lightbox__backdrop {
-  opacity: 0.85;
   pointer-events: auto;
 }
 
@@ -303,24 +300,27 @@ body {
 .filters {
   display: flex;
   gap: 8px;
-  transition: opacity var(--transition-medium), transform var(--transition-medium);
+  transition: opacity var(--transition-medium);
 }
 
 .filters.hidden {
   opacity: 0;
-  transform: translateY(10px);
   pointer-events: none;
+  position: absolute;
 }
 
 /* Artwork metadata (shown in footer during zoom view) */
 .artwork-meta {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
   text-align: center;
 }
 
 .artwork-meta__title {
-  font-size: 1.1rem;
+  font-size: 1rem;
   font-weight: var(--font-weight-medium);
-  margin-bottom: 4px;
   letter-spacing: 0.02em;
 }
 

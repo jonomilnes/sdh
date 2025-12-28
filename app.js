@@ -459,14 +459,14 @@ function showArtworkMeta(artwork) {
   }
   
   metaEl.innerHTML = `
-    <h2 class="artwork-meta__title">${artwork.title}</h2>
-    <p class="artwork-meta__details">${artwork.year} · ${artwork.medium}</p>
+    <span class="artwork-meta__title">${artwork.title}</span>
+    <span class="artwork-meta__details">${artwork.year} · ${artwork.medium}</span>
   `;
   
   // Animate in
   gsap.fromTo(metaEl, 
-    { opacity: 0, y: 10 },
-    { opacity: 1, y: 0, duration: 0.4, delay: 0.3, ease: 'power2.out' }
+    { opacity: 0 },
+    { opacity: 1, duration: 0.4, delay: 0.2, ease: 'power2.out' }
   );
 }
 
@@ -475,8 +475,7 @@ function hideArtworkMeta() {
   if (metaEl) {
     gsap.to(metaEl, {
       opacity: 0,
-      y: 10,
-      duration: 0.3,
+      duration: 0.2,
       ease: 'power2.in',
       onComplete: () => metaEl.remove()
     });
@@ -518,8 +517,8 @@ function navigateLightbox(direction) {
       duration: 0.15,
       onComplete: () => {
         metaEl.innerHTML = `
-          <h2 class="artwork-meta__title">${newArtwork.title}</h2>
-          <p class="artwork-meta__details">${newArtwork.year} · ${newArtwork.medium}</p>
+          <span class="artwork-meta__title">${newArtwork.title}</span>
+          <span class="artwork-meta__details">${newArtwork.year} · ${newArtwork.medium}</span>
         `;
         gsap.to(metaEl, { opacity: 1, duration: 0.2 });
       }
