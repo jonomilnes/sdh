@@ -134,6 +134,7 @@ function renderFilters() {
 function createFilterButton(value, label) {
   const btn = document.createElement('button');
   btn.className = `filter-btn ${value === 'all' ? 'active' : ''}`;
+  btn.dataset.filter = value;
   btn.textContent = label;
   btn.addEventListener('click', () => setFilter(value));
   return btn;
@@ -144,7 +145,7 @@ function setFilter(filter) {
   
   // Update button states
   document.querySelectorAll('.filter-btn').forEach(btn => {
-    btn.classList.toggle('active', btn.textContent.toLowerCase() === filter);
+    btn.classList.toggle('active', btn.dataset.filter === filter);
   });
   
   // Filter artworks with animation
