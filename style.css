@@ -15,8 +15,7 @@
   
   --grid-gap: 60px;
   --grid-cell-size: 280px;
-  --grid-columns: 8;
-  --grid-rows: 5;
+  --grid-columns: 9;
   
   --header-height: 80px;
   --footer-height: 70px;
@@ -106,9 +105,9 @@ body {
 }
 
 .canvas__inner {
-  width: calc(var(--grid-columns) * (var(--grid-cell-size) + var(--grid-gap)) + 200px);
-  height: calc(var(--grid-rows) * (var(--grid-cell-size) + var(--grid-gap)) + var(--header-height) + var(--footer-height) + 100px);
-  padding: calc(var(--header-height) + 40px) 100px calc(var(--footer-height) + 40px) 100px;
+  display: inline-block;
+  /* Padding allows scrolling past edges so items 1-2 and 8-9 can scroll into view */
+  padding: calc(50vh - var(--header-height)) calc(50vw);
   will-change: transform;
 }
 
@@ -118,9 +117,7 @@ body {
 .grid {
   display: grid;
   grid-template-columns: repeat(var(--grid-columns), var(--grid-cell-size));
-  grid-template-rows: repeat(var(--grid-rows), var(--grid-cell-size));
   gap: var(--grid-gap);
-  perspective: 1000px;
   transform-origin: center center;
   will-change: transform;
 }

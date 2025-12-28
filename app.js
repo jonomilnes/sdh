@@ -31,13 +31,32 @@ const scrollHint = document.getElementById('scroll-hint');
 // ========================================
 async function init() {
   await loadArtworks();
+  calculateGridLayout();
   renderGrid();
   renderFilters();
   initCanvasScroll();
   initParallax();
   initLightbox();
   initScrollHint();
-  centerCanvas();
+  
+  // Wait for images to start loading, then center
+  requestAnimationFrame(() => {
+    requestAnimationFrame(() => {
+      centerCanvas();
+    });
+  });
+}
+
+// ========================================
+// Calculate Grid Layout
+// ========================================
+function calculateGridLayout() {
+  // Fixed 9 columns, rows calculated based on artwork count
+  const columns = 9;
+  const rows = Math.ceil(artworks.length / columns);
+  
+  // Set CSS variable (columns is fixed at 9 in CSS, but we track rows for reference)
+  document.documentElement.style.setProperty('--grid-columns', columns);
 }
 
 // ========================================
@@ -600,16 +619,31 @@ function initScrollHint() {
 // Center Canvas Initially
 // ========================================
 function centerCanvas() {
-  // Position canvas to show the grid somewhat centered
-  // but with room to scroll in all directions
-  const totalWidth = canvasInner.scrollWidth;
-  const totalHeight = canvasInner.scrollHeight;
+  // Get grid dimensions from CSS
+  const style = getComputedStyle(document.documentElement);
+  const cellSize = parseInt(style.getPropertyValue('--grid-cell-size'));
+  const gap = parseInt(style.getPropertyValue('--grid-gap'));
+  const columns = 9;
+  const rows = Math.ceil(artworks.length / columns);
+  
+  // Calculate grid dimensions
+  const gridWidth = columns * cellSize + (columns - 1) * gap;
+  const gridHeight = rows * cellSize + (rows - 1) * gap;
+  
+  // Get viewport size
   const viewportWidth = window.innerWidth;
   const viewportHeight = window.innerHeight;
   
-  // Start scrolled a bit right and down so there's content in all directions
-  canvas.scrollLeft = (totalWidth - viewportWidth) * 0.3;
-  canvas.scrollTop = (totalHeight - viewportHeight) * 0.3;
+  // The padding is 50vw on left/right and 50vh on top/bottom
+  // So the grid starts at (50vw, 50vh - header)
+  
+  // To center: we want the middle of the grid in the middle of the viewport
+  // scrollLeft should position so grid center is at viewport center
+  const scrollLeft = (canvasInner.scrollWidth - viewportWidth) / 2;
+  const scrollTop = (canvasInner.scrollHeight - viewportHeight) / 2;
+  
+  canvas.scrollLeft = scrollLeft;
+  canvas.scrollTop = scrollTop;
 }
 
 // ========================================
