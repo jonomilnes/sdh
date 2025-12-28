@@ -10,6 +10,8 @@ let artworks = [];
 let activeFilter = 'all';
 let isLightboxOpen = false;
 let currentArtwork = null;
+let currentCard = null;
+let canvasScrollPos = { left: 0, top: 0 };
 
 // DOM Elements
 const canvas = document.getElementById('canvas');
@@ -263,7 +265,7 @@ function initCanvasScroll() {
 }
 
 // ========================================
-// Parallax Effect
+// Parallax Effect (subtle opposite movement)
 // ========================================
 function initParallax() {
   let mouseX = 0;
@@ -283,25 +285,14 @@ function initParallax() {
   // Smooth animation loop
   function animate() {
     if (!isLightboxOpen) {
-      // Lerp towards target
-      currentX += (mouseX - currentX) * 0.08;
-      currentY += (mouseY - currentY) * 0.08;
+      // Lerp towards target (smooth easing)
+      currentX += (mouseX - currentX) * 0.06;
+      currentY += (mouseY - currentY) * 0.06;
       
-      // Apply subtle transform to grid
+      // Move grid in OPPOSITE direction of mouse (subtle)
       gsap.set(grid, {
-        rotateY: currentX * 2,
-        rotateX: -currentY * 2,
-        transformPerspective: 1000
-      });
-      
-      // Apply varying parallax to individual cards based on position
-      const cards = document.querySelectorAll('.artwork:not(.filtered-out)');
-      cards.forEach((card, i) => {
-        const depth = (i % 3) * 0.5 + 0.5; // Varying depth
-        gsap.set(card, {
-          x: currentX * 10 * depth,
-          y: currentY * 10 * depth
-        });
+        x: -currentX * 15,
+        y: -currentY * 15
       });
     }
     
@@ -342,152 +333,101 @@ function openLightbox(artwork, cardElement) {
   
   isLightboxOpen = true;
   currentArtwork = artwork;
+  currentCard = cardElement;
   
-  // Get the card's position for the zoom animation (FLIP technique)
+  // Get the card's position relative to viewport
   const cardImg = cardElement.querySelector('.artwork__image');
   const cardImgRect = cardImg.getBoundingClientRect();
   
-  // Set lightbox content
+  // Set lightbox content (just for info display)
   lightboxImage.src = artwork.image;
   lightboxTitle.textContent = artwork.title;
   lightboxMeta.textContent = `${artwork.year} · ${artwork.medium}`;
   
-  // Calculate target size and position
-  const viewportWidth = window.innerWidth;
-  const viewportHeight = window.innerHeight;
-  const maxWidth = viewportWidth * 0.85;
-  const maxHeight = viewportHeight * 0.7;
+  // Calculate where to zoom
+  const viewportCenterX = window.innerWidth / 2;
+  const viewportCenterY = window.innerHeight / 2;
   
-  // Calculate the scale factor from card to full size
-  const scaleX = cardImgRect.width / maxWidth;
-  const scaleY = cardImgRect.height / maxHeight;
-  const startScale = Math.max(scaleX, scaleY);
+  // Card center relative to viewport
+  const cardCenterX = cardImgRect.left + cardImgRect.width / 2;
+  const cardCenterY = cardImgRect.top + cardImgRect.height / 2;
   
-  // Center positions
-  const centerX = viewportWidth / 2;
-  const centerY = viewportHeight / 2 - 30; // Slight offset for info below
+  // Calculate how much to translate canvas to center the card
+  const translateX = viewportCenterX - cardCenterX;
+  const translateY = viewportCenterY - cardCenterY - 40; // Offset for info below
   
-  // Set initial state at card position
-  gsap.set(lightboxContent, {
-    position: 'absolute',
-    left: cardImgRect.left + cardImgRect.width / 2,
-    top: cardImgRect.top + cardImgRect.height / 2,
-    xPercent: -50,
-    yPercent: -50,
-    scale: startScale,
-    opacity: 1
-  });
+  // Calculate zoom scale (make image fill ~70% of viewport)
+  const targetSize = Math.min(window.innerWidth * 0.7, window.innerHeight * 0.6);
+  const currentSize = Math.max(cardImgRect.width, cardImgRect.height);
+  const zoomScale = targetSize / currentSize;
   
-  // Show lightbox container
+  // Store original scroll position
+  canvasScrollPos = { 
+    left: canvas.scrollLeft, 
+    top: canvas.scrollTop 
+  };
+  
+  // Disable canvas scrolling during lightbox
+  canvas.style.overflow = 'hidden';
+  
+  // Show lightbox (for backdrop and info)
   lightbox.classList.add('active');
   
-  // Create a smooth, cinematic zoom effect
-  const tl = gsap.timeline();
+  // Hide the lightbox image (we're zooming the actual grid)
+  gsap.set(lightboxContent, { opacity: 0 });
   
-  // Simultaneously zoom content and fade the canvas
-  tl.to(lightboxContent, {
-    left: centerX,
-    top: centerY,
-    scale: 1,
-    duration: 0.7,
-    ease: 'power2.inOut'
-  }, 0);
+  // Zoom the canvas into the artwork
+  gsap.to(canvasInner, {
+    scale: zoomScale,
+    x: translateX * zoomScale,
+    y: translateY * zoomScale,
+    duration: 0.8,
+    ease: 'power3.inOut',
+    transformOrigin: `${cardCenterX}px ${cardCenterY}px`
+  });
   
-  // Smoothly push other cards away (scale down and fade)
-  document.querySelectorAll('.artwork').forEach((card, i) => {
+  // Fade out other artworks
+  document.querySelectorAll('.artwork').forEach((card) => {
     if (card !== cardElement) {
-      const cardRect = card.getBoundingClientRect();
-      const dx = cardRect.left - cardImgRect.left;
-      const dy = cardRect.top - cardImgRect.top;
-      const distance = Math.sqrt(dx * dx + dy * dy);
-      const delay = Math.min(distance / 3000, 0.15);
-      
       gsap.to(card, {
-        opacity: 0.15,
-        scale: 0.92,
+        opacity: 0,
         duration: 0.5,
-        delay: delay,
         ease: 'power2.out'
       });
     }
-  });
-  
-  // Fade the clicked card as it "becomes" the lightbox
-  gsap.to(cardElement, {
-    opacity: 0,
-    duration: 0.25
-  });
-  
-  // Subtle zoom on the grid container for depth
-  gsap.to(grid, {
-    scale: 0.96,
-    duration: 0.6,
-    ease: 'power2.out'
   });
 }
 
 function closeLightbox() {
   if (!isLightboxOpen) return;
   
-  const currentCard = document.querySelector(`.artwork[data-id="${currentArtwork.id}"]`);
-  const cardImg = currentCard?.querySelector('.artwork__image');
-  
-  // Reset grid scale
-  gsap.to(grid, {
+  // Zoom the canvas back out
+  gsap.to(canvasInner, {
     scale: 1,
-    duration: 0.5,
-    ease: 'power2.inOut'
+    x: 0,
+    y: 0,
+    duration: 0.7,
+    ease: 'power3.inOut',
+    onComplete: () => {
+      lightbox.classList.remove('active');
+      isLightboxOpen = false;
+      currentArtwork = null;
+      currentCard = null;
+      
+      // Re-enable canvas scrolling
+      canvas.style.overflow = 'auto';
+    }
   });
   
-  // Restore all cards with stagger
-  document.querySelectorAll('.artwork').forEach((card, i) => {
+  // Restore all cards
+  document.querySelectorAll('.artwork').forEach((card) => {
     const shouldShow = activeFilter === 'all' || card.dataset.medium === activeFilter;
     gsap.to(card, {
       opacity: shouldShow ? 1 : 0,
-      scale: shouldShow ? 1 : 0.9,
-      x: 0,
-      y: 0,
-      duration: 0.4,
-      delay: i * 0.01,
+      duration: 0.5,
       ease: 'power2.out'
     });
   });
-  
-  if (cardImg) {
-    const cardImgRect = cardImg.getBoundingClientRect();
-    const maxWidth = window.innerWidth * 0.85;
-    const maxHeight = window.innerHeight * 0.7;
-    const scaleX = cardImgRect.width / maxWidth;
-    const scaleY = cardImgRect.height / maxHeight;
-    const endScale = Math.max(scaleX, scaleY);
-    
-    // Animate back to card position
-    gsap.to(lightboxContent, {
-      left: cardImgRect.left + cardImgRect.width / 2,
-      top: cardImgRect.top + cardImgRect.height / 2,
-      scale: endScale,
-      duration: 0.6,
-      ease: 'power2.inOut',
-      onComplete: () => {
-        lightbox.classList.remove('active');
-        isLightboxOpen = false;
-        currentArtwork = null;
-      }
-    });
-  } else {
-    // Fallback: fade out
-    gsap.to(lightboxContent, {
-      opacity: 0,
-      scale: 0.9,
-      duration: 0.3,
-      onComplete: () => {
-        lightbox.classList.remove('active');
-        isLightboxOpen = false;
-        currentArtwork = null;
-        gsap.set(lightboxContent, { opacity: 1 });
-      }
-    });
-  }
 }
 
 function navigateLightbox(direction) {
@@ -505,22 +445,20 @@ function navigateLightbox(direction) {
   const newArtwork = visibleArtworks[newIndex];
   const newCard = document.querySelector(`.artwork[data-id="${newArtwork.id}"]`);
   
-  // Animate transition
+  if (!newCard) return;
+  
+  // Fade out info
   gsap.to(lightboxContent, {
     opacity: 0,
-    scale: 0.95,
     duration: 0.2,
     onComplete: () => {
-      currentArtwork = newArtwork;
-      lightboxImage.src = newArtwork.image;
-      lightboxTitle.textContent = newArtwork.title;
-      lightboxMeta.textContent = `${newArtwork.year} · ${newArtwork.medium}`;
+      // Close current and open new
+      closeLightbox();
       
-      gsap.to(lightboxContent, {
-        opacity: 1,
-        scale: 1,
-        duration: 0.3
-      });
+      // Small delay then open new
+      setTimeout(() => {
+        openLightbox(newArtwork, newCard);
+      }, 100);
     }
   });
 }
