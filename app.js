@@ -335,16 +335,12 @@ function openLightbox(artwork, cardElement) {
   currentArtwork = artwork;
   currentCard = cardElement;
   
-  // Get the card's position relative to viewport
+  // Get the card's image and its position
   const cardImg = cardElement.querySelector('.artwork__image');
   const cardImgRect = cardImg.getBoundingClientRect();
+  const canvasRect = canvas.getBoundingClientRect();
   
-  // Set lightbox content (just for info display)
-  lightboxImage.src = artwork.image;
-  lightboxTitle.textContent = artwork.title;
-  lightboxMeta.textContent = `${artwork.year} · ${artwork.medium}`;
-  
-  // Calculate where to zoom
+  // Viewport center
   const viewportCenterX = window.innerWidth / 2;
   const viewportCenterY = window.innerHeight / 2;
   
@@ -352,14 +348,17 @@ function openLightbox(artwork, cardElement) {
   const cardCenterX = cardImgRect.left + cardImgRect.width / 2;
   const cardCenterY = cardImgRect.top + cardImgRect.height / 2;
   
-  // Calculate how much to translate canvas to center the card
-  const translateX = viewportCenterX - cardCenterX;
-  const translateY = viewportCenterY - cardCenterY - 40; // Offset for info below
+  // Calculate zoom scale (make image fill ~60% of viewport height)
+  const targetHeight = window.innerHeight * 0.55;
+  const targetWidth = window.innerWidth * 0.7;
+  const scaleByHeight = targetHeight / cardImgRect.height;
+  const scaleByWidth = targetWidth / cardImgRect.width;
+  const zoomScale = Math.min(scaleByHeight, scaleByWidth);
   
-  // Calculate zoom scale (make image fill ~70% of viewport)
-  const targetSize = Math.min(window.innerWidth * 0.7, window.innerHeight * 0.6);
-  const currentSize = Math.max(cardImgRect.width, cardImgRect.height);
-  const zoomScale = targetSize / currentSize;
+  // Calculate translation needed to center the card after scaling
+  // After scaling, the card center moves. We need to compensate.
+  const translateX = (viewportCenterX - cardCenterX);
+  const translateY = (viewportCenterY - cardCenterY) - 30; // Small offset for metadata
   
   // Store original scroll position
   canvasScrollPos = { 
@@ -370,23 +369,29 @@ function openLightbox(artwork, cardElement) {
   // Disable canvas scrolling during lightbox
   canvas.style.overflow = 'hidden';
   
-  // Show lightbox (for backdrop and info)
+  // Show lightbox (for backdrop)
   lightbox.classList.add('active');
   
-  // Hide the lightbox image (we're zooming the actual grid)
-  gsap.set(lightboxContent, { opacity: 0 });
+  // Show metadata in footer, hide filters
+  filtersContainer.classList.add('hidden');
+  showArtworkMeta(artwork);
+  
+  // Set transform origin to the card's center position relative to canvasInner
+  const canvasInnerRect = canvasInner.getBoundingClientRect();
+  const originX = cardCenterX - canvasInnerRect.left;
+  const originY = cardCenterY - canvasInnerRect.top;
   
   // Zoom the canvas into the artwork
   gsap.to(canvasInner, {
     scale: zoomScale,
-    x: translateX * zoomScale,
-    y: translateY * zoomScale,
+    x: translateX,
+    y: translateY,
     duration: 0.8,
     ease: 'power3.inOut',
-    transformOrigin: `${cardCenterX}px ${cardCenterY}px`
+    transformOrigin: `${originX}px ${originY}px`
   });
   
-  // Fade out other artworks
+  // Fade out OTHER artworks only (keep selected at full opacity)
   document.querySelectorAll('.artwork').forEach((card) => {
     if (card !== cardElement) {
       gsap.to(card, {
@@ -396,10 +401,20 @@ function openLightbox(artwork, cardElement) {
       });
     }
   });
+  
+  // Ensure selected card stays fully visible
+  gsap.to(cardElement, {
+    opacity: 1,
+    duration: 0.3
+  });
 }
 
 function closeLightbox() {
   if (!isLightboxOpen) return;
+  
+  // Hide metadata, show filters
+  hideArtworkMeta();
+  filtersContainer.classList.remove('hidden');
   
   // Zoom the canvas back out
   gsap.to(canvasInner, {
@@ -430,6 +445,44 @@ function closeLightbox() {
   });
 }
 
+// ========================================
+// Artwork Metadata Display (in footer)
+// ========================================
+function showArtworkMeta(artwork) {
+  // Create or get the metadata element
+  let metaEl = document.getElementById('artwork-meta');
+  if (!metaEl) {
+    metaEl = document.createElement('div');
+    metaEl.id = 'artwork-meta';
+    metaEl.className = 'artwork-meta';
+    document.getElementById('footer').appendChild(metaEl);
+  }
+  
+  metaEl.innerHTML = `
+    <h2 class="artwork-meta__title">${artwork.title}</h2>
+    <p class="artwork-meta__details">${artwork.year} · ${artwork.medium}</p>
+  `;
+  
+  // Animate in
+  gsap.fromTo(metaEl, 
+    { opacity: 0, y: 10 },
+    { opacity: 1, y: 0, duration: 0.4, delay: 0.3, ease: 'power2.out' }
+  );
+}
+
+function hideArtworkMeta() {
+  const metaEl = document.getElementById('artwork-meta');
+  if (metaEl) {
+    gsap.to(metaEl, {
+      opacity: 0,
+      y: 10,
+      duration: 0.3,
+      ease: 'power2.in',
+      onComplete: () => metaEl.remove()
+    });
+  }
+}
+
 function navigateLightbox(direction) {
   const visibleArtworks = artworks.filter(a => 
     activeFilter === 'all' || a.medium === activeFilter
@@ -447,19 +500,54 @@ function navigateLightbox(direction) {
   
   if (!newCard) return;
   
-  // Fade out info
-  gsap.to(lightboxContent, {
-    opacity: 0,
-    duration: 0.2,
-    onComplete: () => {
-      // Close current and open new
-      closeLightbox();
-      
-      // Small delay then open new
-      setTimeout(() => {
-        openLightbox(newArtwork, newCard);
-      }, 100);
-    }
+  // Fade out old, fade in new
+  const oldCard = currentCard;
+  
+  gsap.to(oldCard, { opacity: 0, duration: 0.25 });
+  gsap.to(newCard, { opacity: 1, duration: 0.25 });
+  
+  // Update state
+  currentArtwork = newArtwork;
+  currentCard = newCard;
+  
+  // Update metadata with crossfade
+  const metaEl = document.getElementById('artwork-meta');
+  if (metaEl) {
+    gsap.to(metaEl, {
+      opacity: 0,
+      duration: 0.15,
+      onComplete: () => {
+        metaEl.innerHTML = `
+          <h2 class="artwork-meta__title">${newArtwork.title}</h2>
+          <p class="artwork-meta__details">${newArtwork.year} · ${newArtwork.medium}</p>
+        `;
+        gsap.to(metaEl, { opacity: 1, duration: 0.2 });
+      }
+    });
+  }
+  
+  // Get new card position
+  const cardImg = newCard.querySelector('.artwork__image');
+  const cardImgRect = cardImg.getBoundingClientRect();
+  
+  const viewportCenterX = window.innerWidth / 2;
+  const viewportCenterY = window.innerHeight / 2;
+  const cardCenterX = cardImgRect.left + cardImgRect.width / 2;
+  const cardCenterY = cardImgRect.top + cardImgRect.height / 2;
+  
+  // Additional translation needed
+  const additionalX = viewportCenterX - cardCenterX;
+  const additionalY = (viewportCenterY - cardCenterY) - 30;
+  
+  // Get current x/y and add to them
+  const currentX = gsap.getProperty(canvasInner, 'x');
+  const currentY = gsap.getProperty(canvasInner, 'y');
+  
+  gsap.to(canvasInner, {
+    x: currentX + additionalX,
+    y: currentY + additionalY,
+    duration: 0.5,
+    ease: 'power2.inOut'
   });
 }
 

@@ -303,6 +303,32 @@ body {
 .filters {
   display: flex;
   gap: 8px;
+  transition: opacity var(--transition-medium), transform var(--transition-medium);
+}
+
+.filters.hidden {
+  opacity: 0;
+  transform: translateY(10px);
+  pointer-events: none;
+}
+
+/* Artwork metadata (shown in footer during zoom view) */
+.artwork-meta {
+  text-align: center;
+}
+
+.artwork-meta__title {
+  font-size: 1.1rem;
+  font-weight: var(--font-weight-medium);
+  margin-bottom: 4px;
+  letter-spacing: 0.02em;
+}
+
+.artwork-meta__details {
+  font-size: 0.9rem;
+  font-weight: var(--font-weight-light);
+  color: var(--color-text-muted);
+  text-transform: capitalize;
 }
 
 .filter-btn {
