@@ -372,9 +372,16 @@ function openLightbox(artwork, cardElement) {
   // Show lightbox (for backdrop)
   lightbox.classList.add('active');
   
-  // Show metadata in footer, hide filters
-  filtersContainer.classList.add('hidden');
-  showArtworkMeta(artwork);
+  // Fade out filters, then show metadata
+  gsap.to(filtersContainer, {
+    opacity: 0,
+    duration: 0.2,
+    ease: 'power2.in',
+    onComplete: () => {
+      filtersContainer.classList.add('hidden');
+      showArtworkMeta(artwork);
+    }
+  });
   
   // Set transform origin to the card's center position relative to canvasInner
   const canvasInnerRect = canvasInner.getBoundingClientRect();
@@ -412,9 +419,26 @@ function openLightbox(artwork, cardElement) {
 function closeLightbox() {
   if (!isLightboxOpen) return;
   
-  // Hide metadata, show filters
-  hideArtworkMeta();
-  filtersContainer.classList.remove('hidden');
+  // Fade out metadata first
+  const metaEl = document.getElementById('artwork-meta');
+  if (metaEl) {
+    gsap.to(metaEl, {
+      opacity: 0,
+      duration: 0.2,
+      ease: 'power2.in',
+      onComplete: () => {
+        metaEl.remove();
+        // Then fade in filters
+        filtersContainer.classList.remove('hidden');
+        gsap.fromTo(filtersContainer, 
+          { opacity: 0 }, 
+          { opacity: 1, duration: 0.3, ease: 'power2.out' }
+        );
+      }
+    });
+  } else {
+    filtersContainer.classList.remove('hidden');
+  }
   
   // Zoom the canvas back out
   gsap.to(canvasInner, {

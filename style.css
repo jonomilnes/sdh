@@ -249,36 +249,7 @@ body {
 }
 
 .lightbox__close {
-  position: absolute;
-  top: 30px;
-  right: 30px;
-  width: 48px;
-  height: 48px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  background: transparent;
-  border: 1px solid var(--color-border);
-  border-radius: 50%;
-  cursor: pointer;
-  color: var(--color-text);
-  opacity: 0;
-  transform: scale(0.9);
-  transition: opacity var(--transition-medium) 0.1s, 
-              transform var(--transition-medium) 0.1s,
-              background var(--transition-fast),
-              border-color var(--transition-fast);
-}
-
-.lightbox.active .lightbox__close {
-  opacity: 1;
-  transform: scale(1);
-}
-
-.lightbox__close:hover {
-  background: var(--color-text);
-  border-color: var(--color-text);
-  color: var(--color-bg);
+  display: none;
 }
 
 /* ========================================
@@ -301,12 +272,12 @@ body {
   display: flex;
   gap: 8px;
   transition: opacity var(--transition-medium);
+  position: absolute;
 }
 
 .filters.hidden {
   opacity: 0;
   pointer-events: none;
-  position: absolute;
 }
 
 /* Artwork metadata (shown in footer during zoom view) */
@@ -316,6 +287,7 @@ body {
   justify-content: center;
   gap: 12px;
   text-align: center;
+  position: absolute;
 }
 
 .artwork-meta__title {
