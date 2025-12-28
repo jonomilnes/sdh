@@ -107,7 +107,7 @@ body {
 .canvas__inner {
   display: inline-block;
   /* Padding allows scrolling past edges so items 1-2 and 8-9 can scroll into view */
-  padding: calc(50vh - var(--header-height)) calc(50vw);
+  padding: 100px;
   will-change: transform;
 }
 
