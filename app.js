@@ -31,13 +31,36 @@ const scrollHint = document.getElementById('scroll-hint');
 // ========================================
 async function init() {
   await loadArtworks();
+  calculateGridLayout();
   renderGrid();
   renderFilters();
   initCanvasScroll();
   initParallax();
   initLightbox();
   initScrollHint();
-  centerCanvas();
+  
+  // Wait for images to start loading, then center
+  requestAnimationFrame(() => {
+    requestAnimationFrame(() => {
+      centerCanvas();
+    });
+  });
+}
+
+// ========================================
+// Calculate Grid Layout
+// ========================================
+function calculateGridLayout() {
+  const count = artworks.length;
+  
+  // Calculate optimal columns for a roughly square-ish grid
+  // Aim for slightly more columns than rows for landscape feel
+  const columns = Math.ceil(Math.sqrt(count * 1.5));
+  const rows = Math.ceil(count / columns);
+  
+  // Set CSS variable
+  document.documentElement.style.setProperty('--grid-columns', columns);
+  document.documentElement.style.setProperty('--grid-rows', rows);
 }
 
 // ========================================
@@ -600,16 +623,15 @@ function initScrollHint() {
 // Center Canvas Initially
 // ========================================
 function centerCanvas() {
-  // Position canvas to show the grid somewhat centered
-  // but with room to scroll in all directions
+  // Get the actual dimensions
   const totalWidth = canvasInner.scrollWidth;
   const totalHeight = canvasInner.scrollHeight;
   const viewportWidth = window.innerWidth;
   const viewportHeight = window.innerHeight;
   
-  // Start scrolled a bit right and down so there's content in all directions
-  canvas.scrollLeft = (totalWidth - viewportWidth) * 0.3;
-  canvas.scrollTop = (totalHeight - viewportHeight) * 0.3;
+  // Center the canvas so the middle of the grid is in the middle of the viewport
+  canvas.scrollLeft = (totalWidth - viewportWidth) / 2;
+  canvas.scrollTop = (totalHeight - viewportHeight) / 2;
 }
 
 // ========================================

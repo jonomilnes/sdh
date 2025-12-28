@@ -29,6 +29,9 @@
   --z-footer: 100;
   --z-lightbox: 200;
   --z-scroll-hint: 50;
+  
+  /* Canvas padding - space around the grid */
+  --canvas-padding: 50vw;
 }
 
 /* ========================================
@@ -106,9 +109,11 @@ body {
 }
 
 .canvas__inner {
-  width: calc(var(--grid-columns) * (var(--grid-cell-size) + var(--grid-gap)) + 200px);
-  height: calc(var(--grid-rows) * (var(--grid-cell-size) + var(--grid-gap)) + var(--header-height) + var(--footer-height) + 100px);
-  padding: calc(var(--header-height) + 40px) 100px calc(var(--footer-height) + 40px) 100px;
+  /* Size is calculated dynamically in JS and set via inline style */
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: var(--canvas-padding);
   will-change: transform;
 }
 
@@ -118,9 +123,7 @@ body {
 .grid {
   display: grid;
   grid-template-columns: repeat(var(--grid-columns), var(--grid-cell-size));
-  grid-template-rows: repeat(var(--grid-rows), var(--grid-cell-size));
   gap: var(--grid-gap);
-  perspective: 1000px;
   transform-origin: center center;
   will-change: transform;
 }
