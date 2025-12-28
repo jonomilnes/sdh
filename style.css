@@ -15,8 +15,7 @@
   
   --grid-gap: 60px;
   --grid-cell-size: 280px;
-  --grid-columns: 8;
-  --grid-rows: 5;
+  --grid-columns: 9;
   
   --header-height: 80px;
   --footer-height: 70px;
@@ -29,9 +28,6 @@
   --z-footer: 100;
   --z-lightbox: 200;
   --z-scroll-hint: 50;
-  
-  /* Canvas padding - space around the grid */
-  --canvas-padding: 50vw;
 }
 
 /* ========================================
@@ -109,11 +105,9 @@ body {
 }
 
 .canvas__inner {
-  /* Size is calculated dynamically in JS and set via inline style */
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  padding: var(--canvas-padding);
+  display: inline-block;
+  /* Padding allows scrolling past edges so items 1-2 and 8-9 can scroll into view */
+  padding: calc(50vh - var(--header-height)) calc(50vw);
   will-change: transform;
 }
 
