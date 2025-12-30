@@ -697,30 +697,40 @@ function openAbout() {
       y: gsap.getProperty(card, 'y') || 0
     });
     
-    // Determine direction: left or right of center
+    // Random angle for scatter direction (but biased away from center)
     const isLeft = cardCenterX < viewportCenterX;
+    const baseAngle = isLeft ? Math.PI + (Math.random() - 0.5) * 1.2 : (Math.random() - 0.5) * 1.2;
     
-    // Calculate scatter distance - further for items closer to center
-    const distanceFromCenter = Math.abs(cardCenterX - viewportCenterX);
-    const maxDistance = window.innerWidth * 0.6;
-    const scatterMultiplier = 1 - (distanceFromCenter / (window.innerWidth / 2)) * 0.5;
+    // Random distance - some close (visible on edges), some far
+    const minDistance = 150 + Math.random() * 200;
+    const maxDistance = 400 + Math.random() * 400;
+    const distance = Math.random() < 0.3 ? minDistance : maxDistance; // 30% stay closer/visible
     
-    // Scatter horizontally with some vertical variance
-    const scatterX = isLeft 
-      ? -(maxDistance * scatterMultiplier + Math.random() * 100)
-      : (maxDistance * scatterMultiplier + Math.random() * 100);
-    const scatterY = (Math.random() - 0.5) * 200;
+    // Calculate scatter position
+    const scatterX = Math.cos(baseAngle) * distance + (Math.random() - 0.5) * 150;
+    const scatterY = Math.sin(baseAngle) * distance + (Math.random() - 0.5) * 300;
     
-    // Animate scatter with stagger
+    // Random opacity - some more visible than others
+    const opacity = Math.random() < 0.25 ? 0.4 + Math.random() * 0.3 : 0.08 + Math.random() * 0.15;
+    
+    // Random scale and rotation for chaos
+    const scale = 0.6 + Math.random() * 0.5;
+    const rotation = (Math.random() - 0.5) * 30;
+    
+    // Random duration for more organic feel
+    const duration = 0.6 + Math.random() * 0.5;
+    const delay = Math.random() * 0.15;
+    
+    // Animate scatter
     gsap.to(card, {
       x: scatterX,
       y: scatterY,
-      opacity: 0.15,
-      scale: 0.8 + Math.random() * 0.3,
-      rotation: (Math.random() - 0.5) * 15,
-      duration: 0.8,
-      delay: index * 0.01,
-      ease: 'power3.out'
+      opacity: opacity,
+      scale: scale,
+      rotation: rotation,
+      duration: duration,
+      delay: delay,
+      ease: 'power2.out'
     });
   });
   
@@ -734,8 +744,13 @@ function openAbout() {
     ease: 'power2.in'
   });
   
-  // Show about overlay
+  // Show about overlay and animate content in
   aboutOverlay.classList.add('active');
+  const aboutContent = aboutOverlay.querySelector('.about-content');
+  gsap.fromTo(aboutContent, 
+    { opacity: 0, y: 30 },
+    { opacity: 1, y: 0, duration: 0.6, delay: 0.35, ease: 'power2.out' }
+  );
 }
 
 function closeAbout() {
@@ -750,9 +765,11 @@ function closeAbout() {
     ease: 'power2.in'
   });
   
-  // Animate artworks back to original positions
-  artworkOriginalPositions.forEach(({ card, x, y }, index) => {
+  // Animate artworks back to original positions with random timing for organic feel
+  artworkOriginalPositions.forEach(({ card, x, y }) => {
     const shouldShow = activeFilter === 'all' || card.dataset.medium === activeFilter;
+    const delay = Math.random() * 0.12;
+    const duration = 0.5 + Math.random() * 0.3;
     
     gsap.to(card, {
       x: x,
@@ -760,8 +777,8 @@ function closeAbout() {
       opacity: shouldShow ? 1 : 0,
       scale: 1,
       rotation: 0,
-      duration: 0.7,
-      delay: index * 0.01,
+      duration: duration,
+      delay: delay,
       ease: 'power3.inOut'
     });
   });
@@ -779,12 +796,12 @@ function closeAbout() {
     ease: 'power2.out'
   });
   
-  // Hide about overlay
+  // Hide about overlay after animation
   setTimeout(() => {
     aboutOverlay.classList.remove('active');
-    // Reset about content for next open
-    gsap.set(aboutContent, { opacity: 0, y: 20 });
-  }, 300);
+    // Kill any GSAP properties on the content so CSS can take over next time
+    gsap.set(aboutContent, { clearProps: 'all' });
+  }, 350);
 }
 
 // ========================================
