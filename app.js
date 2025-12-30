@@ -9,9 +9,11 @@
 let artworks = [];
 let activeFilter = 'all';
 let isLightboxOpen = false;
+let isAboutOpen = false;
 let currentArtwork = null;
 let currentCard = null;
 let canvasScrollPos = { left: 0, top: 0 };
+let artworkOriginalPositions = [];
 
 // DOM Elements
 const canvas = document.getElementById('canvas');
@@ -25,6 +27,9 @@ const lightboxMeta = document.getElementById('lightbox-meta');
 const lightboxClose = document.getElementById('lightbox-close');
 const filtersContainer = document.getElementById('filters');
 const scrollHint = document.getElementById('scroll-hint');
+const aboutLink = document.getElementById('about-link');
+const aboutOverlay = document.getElementById('about-overlay');
+const aboutClose = document.getElementById('about-close');
 
 // ========================================
 // Initialize
@@ -38,6 +43,7 @@ async function init() {
   initParallax();
   initLightbox();
   initScrollHint();
+  initAbout();
   
   // Wait for images to start loading, then center
   requestAnimationFrame(() => {
@@ -295,7 +301,7 @@ function initParallax() {
   
   // Track mouse position
   document.addEventListener('mousemove', (e) => {
-    if (isLightboxOpen) return;
+    if (isLightboxOpen || isAboutOpen) return;
     
     // Normalize to -1 to 1
     mouseX = (e.clientX / window.innerWidth - 0.5) * 2;
@@ -304,7 +310,7 @@ function initParallax() {
   
   // Smooth animation loop
   function animate() {
-    if (!isLightboxOpen) {
+    if (!isLightboxOpen && !isAboutOpen) {
       // Lerp towards target (smooth easing)
       currentX += (mouseX - currentX) * 0.06;
       currentY += (mouseY - currentY) * 0.06;
@@ -645,6 +651,140 @@ function centerCanvas() {
   
   canvas.scrollLeft = scrollLeft;
   canvas.scrollTop = scrollTop;
+}
+
+// ========================================
+// About Section
+// ========================================
+function initAbout() {
+  aboutLink.addEventListener('click', (e) => {
+    e.preventDefault();
+    if (!isAboutOpen && !isLightboxOpen) {
+      openAbout();
+    }
+  });
+  
+  aboutClose.addEventListener('click', closeAbout);
+  
+  // ESC key to close
+  document.addEventListener('keydown', (e) => {
+    if (e.key === 'Escape' && isAboutOpen) {
+      closeAbout();
+    }
+  });
+}
+
+function openAbout() {
+  isAboutOpen = true;
+  
+  // Get all artwork cards
+  const cards = document.querySelectorAll('.artwork');
+  const viewportCenterX = window.innerWidth / 2;
+  const viewportCenterY = window.innerHeight / 2;
+  
+  // Store original positions and calculate scatter positions
+  artworkOriginalPositions = [];
+  
+  cards.forEach((card, index) => {
+    const rect = card.getBoundingClientRect();
+    const cardCenterX = rect.left + rect.width / 2;
+    const cardCenterY = rect.top + rect.height / 2;
+    
+    // Store the current transform
+    artworkOriginalPositions.push({
+      card,
+      x: gsap.getProperty(card, 'x') || 0,
+      y: gsap.getProperty(card, 'y') || 0
+    });
+    
+    // Determine direction: left or right of center
+    const isLeft = cardCenterX < viewportCenterX;
+    
+    // Calculate scatter distance - further for items closer to center
+    const distanceFromCenter = Math.abs(cardCenterX - viewportCenterX);
+    const maxDistance = window.innerWidth * 0.6;
+    const scatterMultiplier = 1 - (distanceFromCenter / (window.innerWidth / 2)) * 0.5;
+    
+    // Scatter horizontally with some vertical variance
+    const scatterX = isLeft 
+      ? -(maxDistance * scatterMultiplier + Math.random() * 100)
+      : (maxDistance * scatterMultiplier + Math.random() * 100);
+    const scatterY = (Math.random() - 0.5) * 200;
+    
+    // Animate scatter with stagger
+    gsap.to(card, {
+      x: scatterX,
+      y: scatterY,
+      opacity: 0.15,
+      scale: 0.8 + Math.random() * 0.3,
+      rotation: (Math.random() - 0.5) * 15,
+      duration: 0.8,
+      delay: index * 0.01,
+      ease: 'power3.out'
+    });
+  });
+  
+  // Disable canvas interaction
+  canvas.style.pointerEvents = 'none';
+  
+  // Hide filters
+  gsap.to(filtersContainer, {
+    opacity: 0,
+    duration: 0.3,
+    ease: 'power2.in'
+  });
+  
+  // Show about overlay
+  aboutOverlay.classList.add('active');
+}
+
+function closeAbout() {
+  isAboutOpen = false;
+  
+  // Hide about content first
+  const aboutContent = aboutOverlay.querySelector('.about-content');
+  gsap.to(aboutContent, {
+    opacity: 0,
+    y: -20,
+    duration: 0.3,
+    ease: 'power2.in'
+  });
+  
+  // Animate artworks back to original positions
+  artworkOriginalPositions.forEach(({ card, x, y }, index) => {
+    const shouldShow = activeFilter === 'all' || card.dataset.medium === activeFilter;
+    
+    gsap.to(card, {
+      x: x,
+      y: y,
+      opacity: shouldShow ? 1 : 0,
+      scale: 1,
+      rotation: 0,
+      duration: 0.7,
+      delay: index * 0.01,
+      ease: 'power3.inOut'
+    });
+  });
+  
+  // Re-enable canvas interaction
+  setTimeout(() => {
+    canvas.style.pointerEvents = 'auto';
+  }, 400);
+  
+  // Show filters
+  gsap.to(filtersContainer, {
+    opacity: 1,
+    duration: 0.4,
+    delay: 0.3,
+    ease: 'power2.out'
+  });
+  
+  // Hide about overlay
+  setTimeout(() => {
+    aboutOverlay.classList.remove('active');
+    // Reset about content for next open
+    gsap.set(aboutContent, { opacity: 0, y: 20 });
+  }, 300);
 }
 
 // ========================================

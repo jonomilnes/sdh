@@ -73,6 +73,22 @@ body {
   pointer-events: none;
 }
 
+.header__about {
+  position: absolute;
+  left: 40px;
+  font-size: 0.9rem;
+  font-weight: var(--font-weight-regular);
+  letter-spacing: 0.05em;
+  color: var(--color-text-muted);
+  text-decoration: none;
+  pointer-events: auto;
+  transition: color var(--transition-fast);
+}
+
+.header__about:hover {
+  color: var(--color-text);
+}
+
 .header__title {
   font-size: 1.25rem;
   font-weight: var(--font-weight-medium);
@@ -86,6 +102,70 @@ body {
   height: 35px;
   width: auto;
   display: block;
+}
+
+/* ========================================
+   About Overlay
+   ======================================== */
+.about-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: var(--z-lightbox);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  pointer-events: none;
+  opacity: 0;
+  visibility: hidden;
+  transition: opacity var(--transition-slow), visibility var(--transition-slow);
+}
+
+.about-overlay.active {
+  pointer-events: auto;
+  opacity: 1;
+  visibility: visible;
+}
+
+.about-content {
+  max-width: 600px;
+  padding: 0 40px;
+  text-align: center;
+  transform: translateY(20px);
+  opacity: 0;
+  transition: transform var(--transition-medium), opacity var(--transition-medium);
+}
+
+.about-overlay.active .about-content {
+  transform: translateY(0);
+  opacity: 1;
+  transition-delay: 0.3s;
+}
+
+.about-text {
+  font-size: 1.15rem;
+  font-weight: var(--font-weight-light);
+  line-height: 1.8;
+  color: var(--color-text);
+  margin-bottom: 40px;
+}
+
+.about-close {
+  padding: 12px 32px;
+  font-family: var(--font-family);
+  font-size: 0.9rem;
+  font-weight: var(--font-weight-regular);
+  letter-spacing: 0.05em;
+  color: var(--color-text);
+  background: transparent;
+  border: 1px solid var(--color-border);
+  border-radius: 100px;
+  cursor: pointer;
+  transition: background var(--transition-fast), border-color var(--transition-fast);
+}
+
+.about-close:hover {
+  background: white;
+  border-color: var(--color-text-muted);
 }
 
 /* ========================================
@@ -364,7 +444,20 @@ body {
     padding: 0 20px;
   }
   
+  .header__about {
+    left: 20px;
+    font-size: 0.8rem;
+  }
+  
   .header__title {
+    font-size: 1rem;
+  }
+  
+  .about-content {
+    padding: 0 24px;
+  }
+  
+  .about-text {
     font-size: 1rem;
   }
   
