@@ -55,6 +55,18 @@ body {
   width: 100vw;
 }
 
+::selection {
+  background: black;
+  color: white;
+  text-shadow: none;
+}
+
+::-moz-selection {
+  background: black;
+  color: white;
+  text-shadow: none;
+}
+
 /* ========================================
    Header
    ======================================== */
@@ -151,9 +163,9 @@ body {
 }
 
 .about-text {
-  font-size: 1.15rem;
-  font-weight: var(--font-weight-light);
-  line-height: 1.8;
+  font-size: 1rem;
+  font-weight: var(--font-weight-normal);
+  line-height: 1.4;
   color: var(--color-text);
   margin-bottom: 30px;
 }
