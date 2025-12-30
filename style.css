@@ -82,7 +82,7 @@ body {
   color: var(--color-text-muted);
   text-decoration: none;
   pointer-events: auto;
-  transition: color var(--transition-fast);
+  transition: color var(--transition-fast), opacity var(--transition-medium);
 }
 
 .header__about:hover {
@@ -126,10 +126,15 @@ body {
   visibility: visible;
 }
 
+.about-overlay.active {
+  cursor: url('data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" width="50" height="20"><text x="0" y="15" font-family="Inter, sans-serif" font-size="14" font-weight="300" fill="%231a1a1a">Close</text></svg>'), auto;
+}
+
 .about-content {
   max-width: 600px;
   padding: 0 40px;
   text-align: center;
+  cursor: default;
 }
 
 .about-text {
@@ -137,26 +142,12 @@ body {
   font-weight: var(--font-weight-light);
   line-height: 1.8;
   color: var(--color-text);
-  margin-bottom: 40px;
 }
 
-.about-close {
-  padding: 12px 32px;
-  font-family: var(--font-family);
-  font-size: 0.9rem;
-  font-weight: var(--font-weight-regular);
-  letter-spacing: 0.05em;
-  color: var(--color-text);
-  background: transparent;
-  border: 1px solid var(--color-border);
-  border-radius: 100px;
-  cursor: pointer;
-  transition: background var(--transition-fast), border-color var(--transition-fast);
-}
-
-.about-close:hover {
-  background: white;
-  border-color: var(--color-text-muted);
+/* Hide about link during lightbox */
+.header__about.hidden {
+  opacity: 0;
+  pointer-events: none;
 }
 
 /* ========================================
@@ -450,6 +441,10 @@ body {
   
   .about-text {
     font-size: 1rem;
+  }
+  
+  .about-overlay.active {
+    cursor: pointer;
   }
   
   .canvas {
