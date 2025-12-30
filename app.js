@@ -692,11 +692,6 @@ function openAbout() {
   const cards = document.querySelectorAll('.artwork');
   const viewportCenterX = window.innerWidth / 2;
   const viewportCenterY = window.innerHeight / 2;
-  const isMobile = window.innerWidth <= 768;
-  
-  // Define the "safe zone" where text will be (center of screen)
-  const safeZoneWidth = isMobile ? 300 : 650;
-  const safeZoneHeight = isMobile ? 250 : 200;
   
   // Store original positions and calculate scatter positions
   artworkOriginalPositions = [];
@@ -713,42 +708,22 @@ function openAbout() {
       y: gsap.getProperty(card, 'y') || 0
     });
     
-    // Determine which side to scatter to (left or right)
+    // Random angle for scatter direction (but biased away from center)
     const isLeft = cardCenterX < viewportCenterX;
+    const baseAngle = isLeft ? Math.PI + (Math.random() - 0.5) * 1.2 : (Math.random() - 0.5) * 1.2;
     
-    // Calculate scatter position - ensure it's outside the safe zone
-    let scatterX, scatterY;
+    // Random distance - some close (visible on edges), some far
+    const minDistance = 150 + Math.random() * 200;
+    const maxDistance = 400 + Math.random() * 400;
+    const distance = Math.random() < 0.3 ? minDistance : maxDistance; // 30% stay closer/visible
     
-    // Random choice of scatter zone: left edge, right edge, top, or bottom
-    const zone = Math.random();
-    
-    if (zone < 0.4) {
-      // Left side
-      const edgeDistance = isMobile ? 80 + Math.random() * 120 : 100 + Math.random() * 200;
-      scatterX = -(viewportCenterX - edgeDistance + safeZoneWidth / 2);
-      scatterY = (Math.random() - 0.5) * (window.innerHeight * 0.8);
-    } else if (zone < 0.8) {
-      // Right side
-      const edgeDistance = isMobile ? 80 + Math.random() * 120 : 100 + Math.random() * 200;
-      scatterX = (viewportCenterX - edgeDistance + safeZoneWidth / 2);
-      scatterY = (Math.random() - 0.5) * (window.innerHeight * 0.8);
-    } else if (zone < 0.9) {
-      // Top
-      scatterX = (Math.random() - 0.5) * (window.innerWidth * 0.9);
-      scatterY = -(viewportCenterY - 50 + safeZoneHeight / 2 + Math.random() * 100);
-    } else {
-      // Bottom
-      scatterX = (Math.random() - 0.5) * (window.innerWidth * 0.9);
-      scatterY = (viewportCenterY - 100 + safeZoneHeight / 2 + Math.random() * 100);
-    }
-    
-    // Add some randomness
-    scatterX += (Math.random() - 0.5) * 100;
-    scatterY += (Math.random() - 0.5) * 80;
+    // Calculate scatter position
+    const scatterX = Math.cos(baseAngle) * distance + (Math.random() - 0.5) * 150;
+    const scatterY = Math.sin(baseAngle) * distance + (Math.random() - 0.5) * 300;
     
     // Random scale and rotation for chaos
-    const scale = 0.65 + Math.random() * 0.45;
-    const rotation = (Math.random() - 0.5) * 25;
+    const scale = 0.6 + Math.random() * 0.5;
+    const rotation = (Math.random() - 0.5) * 30;
     
     // Random duration for more organic feel
     const duration = 0.6 + Math.random() * 0.5;
@@ -769,12 +744,13 @@ function openAbout() {
   // Disable canvas interaction
   canvas.style.pointerEvents = 'none';
   
-  // Hide filters
+  // Hide filters and about link
   gsap.to(filtersContainer, {
     opacity: 0,
     duration: 0.3,
     ease: 'power2.in'
   });
+  aboutLink.classList.add('hidden');
   
   // Show about overlay and animate content in
   aboutOverlay.classList.add('active');
@@ -818,13 +794,14 @@ function closeAbout() {
     canvas.style.pointerEvents = 'auto';
   }, 400);
   
-  // Show filters
+  // Show filters and about link
   gsap.to(filtersContainer, {
     opacity: 1,
     duration: 0.4,
     delay: 0.3,
     ease: 'power2.out'
   });
+  aboutLink.classList.remove('hidden');
   
   // Hide about overlay after animation
   setTimeout(() => {
