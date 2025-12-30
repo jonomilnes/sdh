@@ -347,12 +347,64 @@ function initLightbox() {
     
     if (e.key === 'Escape') {
       closeLightbox();
-    } else if (e.key === 'ArrowRight' || e.key === 'ArrowDown') {
-      navigateLightbox(1);
-    } else if (e.key === 'ArrowLeft' || e.key === 'ArrowUp') {
-      navigateLightbox(-1);
+    } else if (e.key === 'ArrowRight') {
+      navigateLightbox('right');
+    } else if (e.key === 'ArrowLeft') {
+      navigateLightbox('left');
+    } else if (e.key === 'ArrowUp') {
+      e.preventDefault();
+      navigateLightbox('up');
+    } else if (e.key === 'ArrowDown') {
+      e.preventDefault();
+      navigateLightbox('down');
     }
   });
+  
+  // Touch/swipe navigation for mobile
+  let touchStartX = null;
+  let touchStartY = null;
+  
+  document.addEventListener('touchstart', (e) => {
+    if (!isLightboxOpen) return;
+    touchStartX = e.touches[0].clientX;
+    touchStartY = e.touches[0].clientY;
+  }, { passive: true });
+  
+  document.addEventListener('touchend', (e) => {
+    if (!isLightboxOpen || touchStartX === null || touchStartY === null) return;
+    
+    const touchEndX = e.changedTouches[0].clientX;
+    const touchEndY = e.changedTouches[0].clientY;
+    
+    const deltaX = touchEndX - touchStartX;
+    const deltaY = touchEndY - touchStartY;
+    
+    const minSwipeDistance = 50;
+    
+    // Determine if horizontal or vertical swipe
+    if (Math.abs(deltaX) > Math.abs(deltaY)) {
+      // Horizontal swipe
+      if (Math.abs(deltaX) > minSwipeDistance) {
+        if (deltaX > 0) {
+          navigateLightbox('left'); // Swipe right = go left
+        } else {
+          navigateLightbox('right'); // Swipe left = go right
+        }
+      }
+    } else {
+      // Vertical swipe
+      if (Math.abs(deltaY) > minSwipeDistance) {
+        if (deltaY > 0) {
+          navigateLightbox('up'); // Swipe down = go up
+        } else {
+          navigateLightbox('down'); // Swipe up = go down
+        }
+      }
+    }
+    
+    touchStartX = null;
+    touchStartY = null;
+  }, { passive: true });
 }
 
 function openLightbox(artwork, cardElement) {
@@ -542,16 +594,37 @@ function hideArtworkMeta() {
 }
 
 function navigateLightbox(direction) {
+  // direction: 'left', 'right', 'up', 'down'
   const visibleArtworks = artworks.filter(a => 
     activeFilter === 'all' || a.medium === activeFilter
   );
   
   const currentIndex = visibleArtworks.findIndex(a => a.id === currentArtwork.id);
-  let newIndex = currentIndex + direction;
+  
+  // Get grid columns (9 on desktop, 4 on tablet, 3 on mobile)
+  const columns = window.innerWidth <= 480 ? 3 : window.innerWidth <= 768 ? 4 : 9;
+  
+  let newIndex;
+  switch (direction) {
+    case 'left':
+      newIndex = currentIndex - 1;
+      break;
+    case 'right':
+      newIndex = currentIndex + 1;
+      break;
+    case 'up':
+      newIndex = currentIndex - columns;
+      break;
+    case 'down':
+      newIndex = currentIndex + columns;
+      break;
+    default:
+      newIndex = currentIndex + direction; // backwards compatibility with number
+  }
   
   // Loop around
-  if (newIndex < 0) newIndex = visibleArtworks.length - 1;
-  if (newIndex >= visibleArtworks.length) newIndex = 0;
+  if (newIndex < 0) newIndex = visibleArtworks.length + newIndex;
+  if (newIndex >= visibleArtworks.length) newIndex = newIndex - visibleArtworks.length;
   
   const newArtwork = visibleArtworks[newIndex];
   const newCard = document.querySelector(`.artwork[data-id="${newArtwork.id}"]`);
@@ -779,6 +852,8 @@ function openAbout() {
   
   // Show about overlay and animate content in
   aboutOverlay.classList.add('active');
+  // Kill any existing animations and reset
+  gsap.killTweensOf(aboutContent);
   gsap.fromTo(aboutContent, 
     { opacity: 0, y: 30 },
     { opacity: 1, y: 0, duration: 0.6, delay: 0.35, ease: 'power2.out' }
@@ -788,18 +863,19 @@ function openAbout() {
 function closeAbout() {
   isAboutOpen = false;
   
-  // Hide about content
+  // Immediately hide the content by setting visibility
+  // This prevents any flash from CSS transitions
   gsap.to(aboutContent, {
     opacity: 0,
     y: -20,
     duration: 0.3,
-    ease: 'power2.in',
-    onComplete: () => {
-      // Only remove active class and clear props after animation completes
-      aboutOverlay.classList.remove('active');
-      gsap.set(aboutContent, { clearProps: 'all' });
-    }
+    ease: 'power2.in'
   });
+  
+  // Remove active class after a short delay (after content is hidden)
+  setTimeout(() => {
+    aboutOverlay.classList.remove('active');
+  }, 350);
   
   // Animate artworks back to original positions with random timing for organic feel
   artworkOriginalPositions.forEach(({ card, x, y }) => {
