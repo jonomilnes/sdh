@@ -55,6 +55,18 @@ body {
   width: 100vw;
 }
 
+::selection {
+  background: black;
+  color: white;
+  text-shadow: none;
+}
+
+::-moz-selection {
+  background: black;
+  color: white;
+  text-shadow: none;
+}
+
 /* ========================================
    Header
    ======================================== */
@@ -73,6 +85,38 @@ body {
   pointer-events: none;
 }
 
+.header__about {
+  position: absolute;
+  left: 40px;
+  font-size: 0.9rem;
+  font-weight: var(--font-weight-regular);
+  letter-spacing: 0.05em;
+  color: var(--color-text-muted);
+  text-decoration: none;
+  pointer-events: auto;
+  transition: color var(--transition-fast), opacity var(--transition-medium);
+}
+
+.header__about:hover {
+  color: var(--color-text);
+}
+
+.header__instagram {
+  position: absolute;
+  right: 40px;
+  font-size: 0.9rem;
+  font-weight: var(--font-weight-regular);
+  letter-spacing: 0.05em;
+  color: var(--color-text-muted);
+  text-decoration: none;
+  pointer-events: auto;
+  transition: color var(--transition-fast), opacity var(--transition-medium);
+}
+
+.header__instagram:hover {
+  color: var(--color-text);
+}
+
 .header__title {
   font-size: 1.25rem;
   font-weight: var(--font-weight-medium);
@@ -86,6 +130,70 @@ body {
   height: 35px;
   width: auto;
   display: block;
+}
+
+/* ========================================
+   About Overlay
+   ======================================== */
+.about-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: var(--z-lightbox);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  pointer-events: none;
+  visibility: hidden;
+}
+
+.about-overlay.active {
+  pointer-events: auto;
+  visibility: visible;
+}
+
+.about-overlay.active {
+  cursor: url('data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" width="50" height="20"><text x="0" y="15" font-family="Inter, sans-serif" font-size="14" font-weight="300" fill="%231a1a1a">Close</text></svg>'), auto;
+}
+
+.about-content {
+  max-width: 600px;
+  padding: 0 40px;
+  text-align: center;
+  cursor: default;
+}
+
+.about-text {
+  font-size: 1rem;
+  font-weight: var(--font-weight-normal);
+  line-height: 1.4;
+  color: var(--color-text);
+  margin-bottom: 30px;
+}
+
+.about-links {
+  display: flex;
+  gap: 24px;
+  justify-content: center;
+}
+
+.about-links a {
+  font-size: 0.9rem;
+  font-weight: var(--font-weight-regular);
+  letter-spacing: 0.05em;
+  color: var(--color-text-muted);
+  text-decoration: none;
+  transition: color var(--transition-fast);
+}
+
+.about-links a:hover {
+  color: var(--color-text);
+}
+
+/* Hide nav links during lightbox/about */
+.header__about.hidden,
+.header__instagram.hidden {
+  opacity: 0;
+  pointer-events: none;
 }
 
 /* ========================================
@@ -200,6 +308,7 @@ body {
   pointer-events: auto;
   opacity: 1;
   visibility: visible;
+  cursor: url('data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" width="50" height="20"><text x="0" y="15" font-family="Inter, sans-serif" font-size="14" font-weight="300" fill="%231a1a1a">Close</text></svg>'), auto;
 }
 
 .lightbox__backdrop {
@@ -364,8 +473,38 @@ body {
     padding: 0 20px;
   }
   
+  .header__about {
+    left: 20px;
+    font-size: 0.8rem;
+  }
+  
+  .header__instagram {
+    right: 20px;
+    font-size: 0.8rem;
+  }
+  
   .header__title {
     font-size: 1rem;
+  }
+  
+  .about-content {
+    padding: 0 24px;
+  }
+  
+  .about-text {
+    font-size: 1rem;
+  }
+  
+  .about-links {
+    gap: 20px;
+  }
+  
+  .about-links a {
+    font-size: 0.8rem;
+  }
+  
+  .about-overlay.active {
+    cursor: pointer;
   }
   
   .canvas {

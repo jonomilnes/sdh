@@ -9,9 +9,11 @@
 let artworks = [];
 let activeFilter = 'all';
 let isLightboxOpen = false;
+let isAboutOpen = false;
 let currentArtwork = null;
 let currentCard = null;
 let canvasScrollPos = { left: 0, top: 0 };
+let artworkOriginalPositions = [];
 
 // DOM Elements
 const canvas = document.getElementById('canvas');
@@ -25,6 +27,10 @@ const lightboxMeta = document.getElementById('lightbox-meta');
 const lightboxClose = document.getElementById('lightbox-close');
 const filtersContainer = document.getElementById('filters');
 const scrollHint = document.getElementById('scroll-hint');
+const aboutLink = document.getElementById('about-link');
+const aboutOverlay = document.getElementById('about-overlay');
+const aboutContent = document.getElementById('about-content');
+const instagramLink = document.getElementById('instagram-link');
 
 // ========================================
 // Initialize
@@ -38,6 +44,7 @@ async function init() {
   initParallax();
   initLightbox();
   initScrollHint();
+  initAbout();
   
   // Wait for images to start loading, then center
   requestAnimationFrame(() => {
@@ -295,7 +302,7 @@ function initParallax() {
   
   // Track mouse position
   document.addEventListener('mousemove', (e) => {
-    if (isLightboxOpen) return;
+    if (isLightboxOpen || isAboutOpen) return;
     
     // Normalize to -1 to 1
     mouseX = (e.clientX / window.innerWidth - 0.5) * 2;
@@ -304,7 +311,7 @@ function initParallax() {
   
   // Smooth animation loop
   function animate() {
-    if (!isLightboxOpen) {
+    if (!isLightboxOpen && !isAboutOpen) {
       // Lerp towards target (smooth easing)
       currentX += (mouseX - currentX) * 0.06;
       currentY += (mouseY - currentY) * 0.06;
@@ -340,12 +347,64 @@ function initLightbox() {
     
     if (e.key === 'Escape') {
       closeLightbox();
-    } else if (e.key === 'ArrowRight' || e.key === 'ArrowDown') {
-      navigateLightbox(1);
-    } else if (e.key === 'ArrowLeft' || e.key === 'ArrowUp') {
-      navigateLightbox(-1);
+    } else if (e.key === 'ArrowRight') {
+      navigateLightbox('right');
+    } else if (e.key === 'ArrowLeft') {
+      navigateLightbox('left');
+    } else if (e.key === 'ArrowUp') {
+      e.preventDefault();
+      navigateLightbox('up');
+    } else if (e.key === 'ArrowDown') {
+      e.preventDefault();
+      navigateLightbox('down');
     }
   });
+  
+  // Touch/swipe navigation for mobile
+  let touchStartX = null;
+  let touchStartY = null;
+  
+  document.addEventListener('touchstart', (e) => {
+    if (!isLightboxOpen) return;
+    touchStartX = e.touches[0].clientX;
+    touchStartY = e.touches[0].clientY;
+  }, { passive: true });
+  
+  document.addEventListener('touchend', (e) => {
+    if (!isLightboxOpen || touchStartX === null || touchStartY === null) return;
+    
+    const touchEndX = e.changedTouches[0].clientX;
+    const touchEndY = e.changedTouches[0].clientY;
+    
+    const deltaX = touchEndX - touchStartX;
+    const deltaY = touchEndY - touchStartY;
+    
+    const minSwipeDistance = 50;
+    
+    // Determine if horizontal or vertical swipe
+    if (Math.abs(deltaX) > Math.abs(deltaY)) {
+      // Horizontal swipe
+      if (Math.abs(deltaX) > minSwipeDistance) {
+        if (deltaX > 0) {
+          navigateLightbox('left'); // Swipe right = go left
+        } else {
+          navigateLightbox('right'); // Swipe left = go right
+        }
+      }
+    } else {
+      // Vertical swipe
+      if (Math.abs(deltaY) > minSwipeDistance) {
+        if (deltaY > 0) {
+          navigateLightbox('up'); // Swipe down = go up
+        } else {
+          navigateLightbox('down'); // Swipe up = go down
+        }
+      }
+    }
+    
+    touchStartX = null;
+    touchStartY = null;
+  }, { passive: true });
 }
 
 function openLightbox(artwork, cardElement) {
@@ -391,6 +450,10 @@ function openLightbox(artwork, cardElement) {
   
   // Show lightbox (for backdrop)
   lightbox.classList.add('active');
+  
+  // Hide nav links
+  aboutLink.classList.add('hidden');
+  instagramLink.classList.add('hidden');
   
   // Fade out filters, then show metadata
   gsap.to(filtersContainer, {
@@ -475,6 +538,10 @@ function closeLightbox() {
       
       // Re-enable canvas scrolling
       canvas.style.overflow = 'auto';
+      
+      // Show nav links
+      aboutLink.classList.remove('hidden');
+      instagramLink.classList.remove('hidden');
     }
   });
   
@@ -527,16 +594,37 @@ function hideArtworkMeta() {
 }
 
 function navigateLightbox(direction) {
+  // direction: 'left', 'right', 'up', 'down'
   const visibleArtworks = artworks.filter(a => 
     activeFilter === 'all' || a.medium === activeFilter
   );
   
   const currentIndex = visibleArtworks.findIndex(a => a.id === currentArtwork.id);
-  let newIndex = currentIndex + direction;
+  
+  // Get grid columns (9 on desktop, 4 on tablet, 3 on mobile)
+  const columns = window.innerWidth <= 480 ? 3 : window.innerWidth <= 768 ? 4 : 9;
+  
+  let newIndex;
+  switch (direction) {
+    case 'left':
+      newIndex = currentIndex - 1;
+      break;
+    case 'right':
+      newIndex = currentIndex + 1;
+      break;
+    case 'up':
+      newIndex = currentIndex - columns;
+      break;
+    case 'down':
+      newIndex = currentIndex + columns;
+      break;
+    default:
+      newIndex = currentIndex + direction; // backwards compatibility with number
+  }
   
   // Loop around
-  if (newIndex < 0) newIndex = visibleArtworks.length - 1;
-  if (newIndex >= visibleArtworks.length) newIndex = 0;
+  if (newIndex < 0) newIndex = visibleArtworks.length + newIndex;
+  if (newIndex >= visibleArtworks.length) newIndex = newIndex - visibleArtworks.length;
   
   const newArtwork = visibleArtworks[newIndex];
   const newCard = document.querySelector(`.artwork[data-id="${newArtwork.id}"]`);
@@ -645,6 +733,182 @@ function centerCanvas() {
   
   canvas.scrollLeft = scrollLeft;
   canvas.scrollTop = scrollTop;
+}
+
+// ========================================
+// About Section
+// ========================================
+function initAbout() {
+  aboutLink.addEventListener('click', (e) => {
+    e.preventDefault();
+    if (!isAboutOpen && !isLightboxOpen) {
+      openAbout();
+    }
+  });
+  
+  // Click anywhere outside text to close
+  aboutOverlay.addEventListener('click', (e) => {
+    if (isAboutOpen && !aboutContent.contains(e.target)) {
+      closeAbout();
+    }
+  });
+  
+  // ESC key to close
+  document.addEventListener('keydown', (e) => {
+    if (e.key === 'Escape' && isAboutOpen) {
+      closeAbout();
+    }
+  });
+}
+
+function openAbout() {
+  isAboutOpen = true;
+  
+  // Get all artwork cards
+  const cards = document.querySelectorAll('.artwork');
+  const viewportCenterX = window.innerWidth / 2;
+  const viewportCenterY = window.innerHeight / 2;
+  
+  // Define exclusion zone in center (where text will be)
+  const exclusionWidth = 700;
+  const exclusionHeight = 300;
+  
+  // Store original positions and calculate scatter positions
+  artworkOriginalPositions = [];
+  
+  cards.forEach((card, index) => {
+    const rect = card.getBoundingClientRect();
+    const cardCenterX = rect.left + rect.width / 2;
+    const cardCenterY = rect.top + rect.height / 2;
+    
+    // Store the current transform
+    artworkOriginalPositions.push({
+      card,
+      x: gsap.getProperty(card, 'x') || 0,
+      y: gsap.getProperty(card, 'y') || 0
+    });
+    
+    // Random angle for scatter direction (but biased away from center)
+    const isLeft = cardCenterX < viewportCenterX;
+    const baseAngle = isLeft ? Math.PI + (Math.random() - 0.5) * 1.2 : (Math.random() - 0.5) * 1.2;
+    
+    // Random distance - some close (visible on edges), some far
+    const minDistance = 150 + Math.random() * 200;
+    const maxDistance = 400 + Math.random() * 400;
+    const distance = Math.random() < 0.3 ? minDistance : maxDistance;
+    
+    // Calculate initial scatter position
+    let scatterX = Math.cos(baseAngle) * distance + (Math.random() - 0.5) * 150;
+    let scatterY = Math.sin(baseAngle) * distance + (Math.random() - 0.5) * 300;
+    
+    // Calculate where the card would end up on screen
+    const finalX = cardCenterX + scatterX;
+    const finalY = cardCenterY + scatterY;
+    
+    // Check if it would land in the exclusion zone and push it out if so
+    const inExclusionX = Math.abs(finalX - viewportCenterX) < exclusionWidth / 2;
+    const inExclusionY = Math.abs(finalY - viewportCenterY) < exclusionHeight / 2;
+    
+    if (inExclusionX && inExclusionY) {
+      // Push it out horizontally to the nearest edge of the exclusion zone
+      if (finalX < viewportCenterX) {
+        scatterX -= (exclusionWidth / 2 - Math.abs(finalX - viewportCenterX) + 50 + Math.random() * 100);
+      } else {
+        scatterX += (exclusionWidth / 2 - Math.abs(finalX - viewportCenterX) + 50 + Math.random() * 100);
+      }
+    }
+    
+    // Random scale and rotation for chaos
+    const scale = 0.6 + Math.random() * 0.5;
+    const rotation = (Math.random() - 0.5) * 30;
+    
+    // Random duration for more organic feel
+    const duration = 0.6 + Math.random() * 0.5;
+    const delay = Math.random() * 0.15;
+    
+    // Animate scatter - keep full opacity
+    gsap.to(card, {
+      x: scatterX,
+      y: scatterY,
+      scale: scale,
+      rotation: rotation,
+      duration: duration,
+      delay: delay,
+      ease: 'power2.out'
+    });
+  });
+  
+  // Disable canvas interaction
+  canvas.style.pointerEvents = 'none';
+  
+  // Hide filters and nav links
+  gsap.to(filtersContainer, {
+    opacity: 0,
+    duration: 0.3,
+    ease: 'power2.in'
+  });
+  aboutLink.classList.add('hidden');
+  instagramLink.classList.add('hidden');
+  
+  // Show about overlay and animate content in
+  aboutOverlay.classList.add('active');
+  // Kill any existing animations and reset
+  gsap.killTweensOf(aboutContent);
+  gsap.fromTo(aboutContent, 
+    { opacity: 0, y: 30 },
+    { opacity: 1, y: 0, duration: 0.6, delay: 0.35, ease: 'power2.out' }
+  );
+}
+
+function closeAbout() {
+  isAboutOpen = false;
+  
+  // Immediately hide the content by setting visibility
+  // This prevents any flash from CSS transitions
+  gsap.to(aboutContent, {
+    opacity: 0,
+    y: -20,
+    duration: 0.3,
+    ease: 'power2.in'
+  });
+  
+  // Remove active class after a short delay (after content is hidden)
+  setTimeout(() => {
+    aboutOverlay.classList.remove('active');
+  }, 350);
+  
+  // Animate artworks back to original positions with random timing for organic feel
+  artworkOriginalPositions.forEach(({ card, x, y }) => {
+    const shouldShow = activeFilter === 'all' || card.dataset.medium === activeFilter;
+    const delay = Math.random() * 0.12;
+    const duration = 0.5 + Math.random() * 0.3;
+    
+    gsap.to(card, {
+      x: x,
+      y: y,
+      opacity: shouldShow ? 1 : 0,
+      scale: 1,
+      rotation: 0,
+      duration: duration,
+      delay: delay,
+      ease: 'power3.inOut'
+    });
+  });
+  
+  // Re-enable canvas interaction
+  setTimeout(() => {
+    canvas.style.pointerEvents = 'auto';
+  }, 400);
+  
+  // Show filters and nav links
+  gsap.to(filtersContainer, {
+    opacity: 1,
+    duration: 0.4,
+    delay: 0.3,
+    ease: 'power2.out'
+  });
+  aboutLink.classList.remove('hidden');
+  instagramLink.classList.remove('hidden');
 }
 
 // ========================================
