@@ -89,6 +89,22 @@ body {
   color: var(--color-text);
 }
 
+.header__instagram {
+  position: absolute;
+  right: 40px;
+  font-size: 0.9rem;
+  font-weight: var(--font-weight-regular);
+  letter-spacing: 0.05em;
+  color: var(--color-text-muted);
+  text-decoration: none;
+  pointer-events: auto;
+  transition: color var(--transition-fast), opacity var(--transition-medium);
+}
+
+.header__instagram:hover {
+  color: var(--color-text);
+}
+
 .header__title {
   font-size: 1.25rem;
   font-weight: var(--font-weight-medium);
@@ -144,8 +160,9 @@ body {
   color: var(--color-text);
 }
 
-/* Hide about link during lightbox */
-.header__about.hidden {
+/* Hide nav links during lightbox/about */
+.header__about.hidden,
+.header__instagram.hidden {
   opacity: 0;
   pointer-events: none;
 }
@@ -428,6 +445,11 @@ body {
   
   .header__about {
     left: 20px;
+    font-size: 0.8rem;
+  }
+  
+  .header__instagram {
+    right: 20px;
     font-size: 0.8rem;
   }
   

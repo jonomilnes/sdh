@@ -30,6 +30,7 @@ const scrollHint = document.getElementById('scroll-hint');
 const aboutLink = document.getElementById('about-link');
 const aboutOverlay = document.getElementById('about-overlay');
 const aboutContent = document.getElementById('about-content');
+const instagramLink = document.getElementById('instagram-link');
 
 // ========================================
 // Initialize
@@ -398,8 +399,9 @@ function openLightbox(artwork, cardElement) {
   // Show lightbox (for backdrop)
   lightbox.classList.add('active');
   
-  // Hide about link
+  // Hide nav links
   aboutLink.classList.add('hidden');
+  instagramLink.classList.add('hidden');
   
   // Fade out filters, then show metadata
   gsap.to(filtersContainer, {
@@ -485,8 +487,9 @@ function closeLightbox() {
       // Re-enable canvas scrolling
       canvas.style.overflow = 'auto';
       
-      // Show about link
+      // Show nav links
       aboutLink.classList.remove('hidden');
+      instagramLink.classList.remove('hidden');
     }
   });
   
@@ -693,6 +696,10 @@ function openAbout() {
   const viewportCenterX = window.innerWidth / 2;
   const viewportCenterY = window.innerHeight / 2;
   
+  // Define exclusion zone in center (where text will be)
+  const exclusionWidth = 700;
+  const exclusionHeight = 300;
+  
   // Store original positions and calculate scatter positions
   artworkOriginalPositions = [];
   
@@ -715,11 +722,28 @@ function openAbout() {
     // Random distance - some close (visible on edges), some far
     const minDistance = 150 + Math.random() * 200;
     const maxDistance = 400 + Math.random() * 400;
-    const distance = Math.random() < 0.3 ? minDistance : maxDistance; // 30% stay closer/visible
+    const distance = Math.random() < 0.3 ? minDistance : maxDistance;
     
-    // Calculate scatter position
-    const scatterX = Math.cos(baseAngle) * distance + (Math.random() - 0.5) * 150;
-    const scatterY = Math.sin(baseAngle) * distance + (Math.random() - 0.5) * 300;
+    // Calculate initial scatter position
+    let scatterX = Math.cos(baseAngle) * distance + (Math.random() - 0.5) * 150;
+    let scatterY = Math.sin(baseAngle) * distance + (Math.random() - 0.5) * 300;
+    
+    // Calculate where the card would end up on screen
+    const finalX = cardCenterX + scatterX;
+    const finalY = cardCenterY + scatterY;
+    
+    // Check if it would land in the exclusion zone and push it out if so
+    const inExclusionX = Math.abs(finalX - viewportCenterX) < exclusionWidth / 2;
+    const inExclusionY = Math.abs(finalY - viewportCenterY) < exclusionHeight / 2;
+    
+    if (inExclusionX && inExclusionY) {
+      // Push it out horizontally to the nearest edge of the exclusion zone
+      if (finalX < viewportCenterX) {
+        scatterX -= (exclusionWidth / 2 - Math.abs(finalX - viewportCenterX) + 50 + Math.random() * 100);
+      } else {
+        scatterX += (exclusionWidth / 2 - Math.abs(finalX - viewportCenterX) + 50 + Math.random() * 100);
+      }
+    }
     
     // Random scale and rotation for chaos
     const scale = 0.6 + Math.random() * 0.5;
@@ -744,13 +768,14 @@ function openAbout() {
   // Disable canvas interaction
   canvas.style.pointerEvents = 'none';
   
-  // Hide filters and about link
+  // Hide filters and nav links
   gsap.to(filtersContainer, {
     opacity: 0,
     duration: 0.3,
     ease: 'power2.in'
   });
   aboutLink.classList.add('hidden');
+  instagramLink.classList.add('hidden');
   
   // Show about overlay and animate content in
   aboutOverlay.classList.add('active');
@@ -763,12 +788,17 @@ function openAbout() {
 function closeAbout() {
   isAboutOpen = false;
   
-  // Hide about content first
+  // Hide about content
   gsap.to(aboutContent, {
     opacity: 0,
     y: -20,
     duration: 0.3,
-    ease: 'power2.in'
+    ease: 'power2.in',
+    onComplete: () => {
+      // Only remove active class and clear props after animation completes
+      aboutOverlay.classList.remove('active');
+      gsap.set(aboutContent, { clearProps: 'all' });
+    }
   });
   
   // Animate artworks back to original positions with random timing for organic feel
@@ -794,7 +824,7 @@ function closeAbout() {
     canvas.style.pointerEvents = 'auto';
   }, 400);
   
-  // Show filters and about link
+  // Show filters and nav links
   gsap.to(filtersContainer, {
     opacity: 1,
     duration: 0.4,
@@ -802,13 +832,7 @@ function closeAbout() {
     ease: 'power2.out'
   });
   aboutLink.classList.remove('hidden');
-  
-  // Hide about overlay after animation
-  setTimeout(() => {
-    aboutOverlay.classList.remove('active');
-    // Kill any GSAP properties on the content so CSS can take over next time
-    gsap.set(aboutContent, { clearProps: 'all' });
-  }, 350);
+  instagramLink.classList.remove('hidden');
 }
 
 // ========================================
