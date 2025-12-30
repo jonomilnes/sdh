@@ -276,6 +276,7 @@ body {
   pointer-events: auto;
   opacity: 1;
   visibility: visible;
+  cursor: url('data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" width="50" height="20"><text x="0" y="15" font-family="Inter, sans-serif" font-size="14" font-weight="300" fill="%231a1a1a">Close</text></svg>'), auto;
 }
 
 .lightbox__backdrop {
