@@ -1,5 +1,5 @@
 [
-  {"id": 1, "title": "Untitled", "year": 2023, "medium": "Sketch",        "image": "images/tinysketch17.JPEG"},
+  {"id": 1, "title": "Backgammon", "year": 2023, "medium": "Sketch",        "image": "images/tinysketch17.JPEG"},
   {"id": 2,  "title": "Untitled", "year": 2025, "medium": "Charcoal",      "image": "images/IMG_0038.jpg"},
   {"id": 3,  "title": "Portrait of Jono in Doncaster", "year": 2025, "medium": "Oil",           "image": "images/IMG_0960.jpg"},
   {"id": 4, "title": "Airport People", "year": 2022, "medium": "Sketch",  "image": "images/IMG_2471.jpg"},
@@ -25,7 +25,7 @@
   {"id": 24, "title": "Untitled", "year": 2025, "medium": "Sketch",  "image": "images/IMG_1059.jpg"},
   {"id": 25, "title": "Untitled", "year": 2025, "medium": "Charcoal",      "image": "images/tinyRDS_OM.jpg"},
   {"id": 26, "title": "Untitled", "year": 2025, "medium": "Oil",           "image": "images/IMG_4419.jpg"},
-  {"id": 27, "title": "Untitled", "year": 2025, "medium": "Sketch",        "image": "images/IMG_5786.jpg"},
+  {"id": 27, "title": "Aussichten vom Zug", "year": 2025, "medium": "Sketch",        "image": "images/IMG_5786.jpg"},
   {"id": 28, "title": "Untitled", "year": 2025, "medium": "Sketch",  "image": "images/IMG_2470.jpg"},
   {"id": 29, "title": "Untitled", "year": 2025, "medium": "Sketch",        "image": "images/IMG_24752.jpg"},
   {"id": 30, "title": "Untitled", "year": 2025, "medium": "Charcoal",      "image": "images/IMG_7549.jpg"},
